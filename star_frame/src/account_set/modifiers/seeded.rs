@@ -252,8 +252,7 @@ where
         let expected = self.account.account_info().pubkey();
         ensure!(
             address.fast_eq(expected),
-            ErrorCode::AddressMismatch,
-            "Seeds: {seeds:?} result in address `{address}` and bump `{bump}`, expected `{expected}`"
+            ErrorCode::AddressMismatch
         );
         self.seeds = Some(SeedsWithBump { seeds, bump });
         Ok(())
@@ -272,8 +271,7 @@ where
         let expected = self.account.account_info().pubkey();
         ensure!(
             address.fast_eq(expected),
-            ErrorCode::AddressMismatch,
-            "Seeds `{seeds:?}` result in address `{address}`, expected `{expected}`"
+            ErrorCode::AddressMismatch
         );
         self.seeds = Some(seeds.clone());
         Ok(())
@@ -324,21 +322,13 @@ where
     ) -> Result<()> {
         // override seeds. Init should be called after seeds are set
         if account_seeds.is_some() {
-            bail!(
-                ErrorCode::ConflictingAccountSeeds,
-                "Conflicting account seeds during init."
-            );
+            bail!(ErrorCode::ConflictingAccountSeeds);
         }
         let seeds = self
             .seeds
             .as_ref()
             .map(|s| s.seeds_with_bump())
-            .ok_or_else(|| {
-                error!(
-                    ErrorCode::SeedsNotSet,
-                    "Seeds not set for `Seeded` during init."
-                )
-            })?;
+            .ok_or(ErrorCode::SeedsNotSet)?;
         self.account
             .init_account::<IF_NEEDED>(arg, Some(seeds), ctx)
     }

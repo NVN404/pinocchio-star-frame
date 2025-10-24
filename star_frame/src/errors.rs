@@ -171,12 +171,21 @@ pub trait StarFrameError: 'static + Debug {
 }
 
 /// The kind of error. Either a [`ProgramError`] or a custom error implementing [`StarFrameError`].
-#[derive(Debug, Display)]
+#[derive(Debug)]
 pub enum ErrorKind {
-    #[display("ProgramError: {_0}")]
     ProgramError(ProgramError),
-    #[display("StarFrameError: {}", _0.name())]
     Custom(Box<dyn StarFrameError + 'static>),
+}
+
+// Add Display implementation as off-chain only
+#[cfg(not(target_os = "solana"))]
+impl std::fmt::Display for ErrorKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::ProgramError(e) => write!(f, "ProgramError: {e}"),
+            Self::Custom(e) => write!(f, "StarFrameError: {}", e.name()),
+        }
+    }
 }
 
 impl PartialEq for ErrorKind {
@@ -390,6 +399,7 @@ impl Error {
     }
 
     /// Logs the error using [`pinocchio_log`]
+    #[cfg(not(target_os = "solana"))]
     pub fn log(&self) {
         {
             let mut logger = Logger::<1000>::default();
